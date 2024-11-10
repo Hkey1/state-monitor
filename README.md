@@ -1,7 +1,7 @@
 # state-monitor
 Render application state. Node.js express middleware;
 
-##Hello World
+## Hello World
 ```js
 const express  = require('express');
 const sMon     = require(...);
@@ -13,12 +13,12 @@ app.use(server.middleware);
 app.listen(3000);
 ```
 
-###function
+### function
 ```js
 const server = new Server({html: async(req)=>'<p>Hello World</p>'});
 ```
 
-###many items
+### many items
 You can add $someString to key html
 ```js
 const server = new Server({
@@ -40,14 +40,14 @@ const server = new Server({
 ```
 
 
-##Subpath
+## Subpath
 If you want run state-monitor not in http://localhost:3000/ but in http://localhost:3000/somePathPrefix 
 
 ```js
 app.use(server.middleware('somePathPrefix'));
 ```
 
-##Pages
+## Pages
 ```js
 const server = new Server({
 	pages: [
@@ -64,7 +64,7 @@ const server = new Server({
 	]
 }):
 ```
-##Tabs
+## Tabs
 ```js
 const server = new Server({
 	tabs : {
@@ -98,7 +98,7 @@ const server = new Server({
 }):
 ```
 
-##Table
+## Table
 ```js
 const server = new Server({
 	table : async ()=>[
@@ -108,7 +108,7 @@ const server = new Server({
 }):
 ```
 
-###Table with filters
+### Table with filters
 Code below will be show 3 tabs:
 	* all     : with all table rows 
 	* active  : filtered rows: row.active
