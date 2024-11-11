@@ -37,6 +37,7 @@ class Tab extends Items{
 			isActive : this.isActive,
 			name     : this.name,
 			badge    : await this.getBadge(req),
+			icon     : await this.getIcon(req),
 			fullName : await this.option('fullName', req, 'string', true, true),
 			details  : await this.option('details',  req, 'string', true, true),
 			tooltip  : await this.option('tooltip',  req, 'string', true, true),

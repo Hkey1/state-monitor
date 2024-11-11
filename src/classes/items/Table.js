@@ -1,8 +1,11 @@
-const assert       = require('node:assert');
-const mustBe       = require('hkey-must-be');
-const Tabs         = require('./Tabs.js');
-const AbstractItem = require('./AbstractItem.js');
-const lib          = require('../../lib.js');
+const assert         = require('node:assert');
+const mustBe         = require('hkey-must-be');
+const Tabs           = require('./Tabs.js');
+const AbstractItem   = require('./AbstractItem.js');
+const lib            = require('../../lib.js');
+const AbstractFilter = require('../filters/AbstractFilter.js');
+const GroupBy        = require('../filters/GroupBy.js');
+
 
 class Table extends Tabs {	
 	static parentOptionsKey  = 'table'
@@ -67,7 +70,12 @@ class Table extends Tabs {
 		return super.normalizeOptions(options);
 	}
 	castChildItem(opts, name=undefined){
-		return ((typeof(opts)==='function' || (typeof(opts)==='object' && !Array.isArray(opts) && !(opts instanceof AbstractItem) && opts.filter))
+		if(opts instanceof GroupBy || (typeof(opts)==='object' && opts.filter instanceof GroupBy)){
+			return new lib.classes.TableViewGroupBy(opts);
+		} else return ((false
+		|| (opts instanceof AbstractFilter) 
+		|| (typeof(opts)==='function') 
+		|| (typeof(opts)==='object' && !Array.isArray(opts) && !(opts instanceof AbstractItem) && (opts.filter||opts.data)))
 			? new lib.classes.TableView(opts)
 			: super.castChildItem(opts, name)
 		)	

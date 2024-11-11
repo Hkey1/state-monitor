@@ -27,9 +27,10 @@ module.exports = function(tag, content='', attrs=undefined){
 	for(let key in attrs){
 		let val = attrs[key] 
 		if(key!=='content' && val!==undefined){
-			if(typeof(val)!=='string'){
+			if(typeof(val)!=='string' && typeof(val)!=='number'){
 				throw new Error(`bad tag=${tag} attribute=${key} type=${typeof val}`)
 			}
+			val = val+'';
 			const s = val.includes(`"`) & !val.includes(`'`) ? `'` : `"`;
 			html += ` ${key}=${s}${val}${s}`
 		}

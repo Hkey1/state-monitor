@@ -1,8 +1,10 @@
 const tag = require('../Functions/tag.js');
-module.exports = async (req, {name, fullName, details, isActive, buttonId, divId, badge, tooltip}, item)=>`
+module.exports = async (req, {name, fullName, details, isActive, buttonId, divId, badge, tooltip, icon}, item)=>`
 	<li class="nav-item" role="presentation">${
 		tag('button', `
-			${name} ${await item.template('badge', req, {content: badge})}		
+			${await item.template('icon', req, {content: icon})}		
+			${name} 
+			${await item.template('badge', req, {content: badge})}		
 		`, {
 			title			: await item.template('tooltip-text', req, {fullName, details, tooltip}),
 			id              : buttonId,

@@ -167,7 +167,10 @@ class Items extends AbstractItem{
 	$isPlainItems(){ return true}
 	$neadBeRow(){    return super.$neadBeRow()  || (this.isPlainItems && this.items.find(item=>(item.neadBeRow  && !item.isContentRow)))}
 	$neadBeRows(){   return super.$neadBeRows() || (this.isPlainItems && this.items.find(item=>(item.neadBeRows && !item.isContentRows)))}
-	
+
+	addItem(...items){
+		return this.push(...items);
+	}
 	push(...items){
 		assert(!this.wasInit);
 		
@@ -193,6 +196,7 @@ class Items extends AbstractItem{
 		assert(!item.parent || item.parent===this);
 		item.parent = this;
 		item.onPushed();
+		return item;
 	}
 };
 

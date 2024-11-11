@@ -19,7 +19,7 @@ const server = new Server({html: async(req)=>'<p>Hello World</p>'});
 ```
 
 ### many items
-You can add $someString to key html
+You can add $someString to key `html`
 ```js
 const server = new Server({
 	html     : '<p>Hello World 1</p>',
@@ -28,7 +28,7 @@ const server = new Server({
 });
 ```
 
-Or key use items key
+Or use items key
 ```js
 const server = new Server({
 	items: [

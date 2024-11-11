@@ -34,6 +34,10 @@
 	width: auto;
 	padding: 20px;	
 }
+.sMon-TableViewGroupBy-pieCol{
+	padding: 20px;	
+}
+
 	
 .smon-page-details{
 	color: gray;
@@ -56,4 +60,27 @@
 .smon-infoTable.table .sMon-infoTable-row.sMon-infoTable-subHeader{
 	border-top-width: 2px	
 }
+	
+	
+div.sMon-table-noDtNav div.dt-layout-row:not(.dt-layout-table) {
+	display: none;	
+}	
+	
+div.sMon-table-noDtNav div.dt-container div.dt-layout-row.dt-layout-table {
+	margin: 0;
+}	
+	
+.sMon-icon, .sMon-icon  .sMon-pie-icon{
+	display : inline-block;
+	width   : 16px; 
+}
+
+
+h2 .sMon-icon .sMon-pie-icon, h2 .sMon-icon{
+	width   : 30px; 
+}	
+.smon-server-link-div .sMon-icon, .smon-server-link-div .sMon-icon .sMon-pie-icon{
+	width   : 20px; 
+}
+	
 	

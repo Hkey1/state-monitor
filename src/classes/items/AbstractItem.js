@@ -30,6 +30,9 @@ class AbstractItem extends AbstractObject{
 
 		this.setId();
 	} 
+	async getIcon(req, data=undefined){		
+		return await this.option('icon', req, 'string', true, true);
+	}
 	setId(){
 		const lc   = this.constructor.name.toLowerCase();
 		const id   = countItemsByClass[lc] ||= 1;
@@ -46,6 +49,7 @@ class AbstractItem extends AbstractObject{
 	}
 	onParentPushed(){}
 	onInit(){
+		//console.log('onInit', this.constructor.name)
 		super.onInit();
 		assert(this.parent===undefined || (this.parent instanceof AbstractItem))
 		assert(this instanceof lib.base.Server || this.parent);

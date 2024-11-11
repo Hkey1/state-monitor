@@ -1,5 +1,5 @@
-module.exports   = async (req, {header, body, id, dataTables, width})=>`
-	<div class="sMon-table">
+module.exports   = async (req, {header, body, id, dataTables, width,isDataTablesNavHide})=>`
+	<div class="sMon-table ${isDataTablesNavHide ? `sMon-table-noDtNav`:``}">
 		<table class="smon-table table" id="${id}">
 			<thead>${header}</thead>
 			<tbody>${body}</tbody>

@@ -49,9 +49,9 @@ class Page extends Items{
 	isParent(req){
 		return (req.sMon.path.length > this.path.length && req.sMon.path.startsWith(this.path))		
 	}
-	url(req){		
-		let path   = this.path;
-		let prefix = req.sMon.prefix;
+	url(req, path=undefined){		
+		path      ??= this.path;
+		let prefix  = req.sMon.prefix;
 		
 		if(path[0] === '/' && prefix && prefix[prefix.length-1]==='/'){
 			path = path.substring(1);
@@ -80,6 +80,7 @@ class Page extends Items{
 		this.pageByName[page.name] = page;
 		page.parent = this;
 		page.onPushed();
+		return page;
 	}
 	$isAnyParentRow(){  return false};
 	$isAnyParentRows(){ return false};
@@ -121,7 +122,8 @@ class Page extends Items{
 			fullName    : await this.option('fullName', req, 'string', true, true),
 			details     : await this.option('details',  req, 'string', true, true),			
 			badge       : await this.getBadge(req),
-			breadcrumbs : await this.renderBreadcrumbs(req),			
+			breadcrumbs : await this.renderBreadcrumbs(req),		
+			icon        : await this.getIcon(req),
 		});
 	}
 	async renderBreadcrumbs(req){
@@ -147,6 +149,7 @@ class Page extends Items{
 			fullName : await this.option('fullName', req, 'string', true, true),
 			details  : await this.option('details',  req, 'string', true, true),			
 			tooltip  : await this.option('tooltip',  req, 'string', true, true),
+			icon     : await this.getIcon(req),
 		});
 	}	
 	async renderSubPagesInSidebar(req){

@@ -11,6 +11,13 @@ const data = [
 	{name: 'Jack',  active: true, a: 3, c:4},
 	{name: 'Jane',  active: false, a: 5, d:6},
 	{name: 'Ivan',  active: false, a: 7, b:8},
+	{name: 'Andry', active: false, a: 7, b:8},
+	{name: 'Filip', active: false, a: 7, b:8},
+	{name: 'Nick',  active: true, a: 3, c:4},
+	{name: 'Nill',  active: true, a: 3, c:4},
+	{name: 'Mike',  active: true, a: 3, c:4},
+	{name: 'Oleg',  active: true, a: 5, c:7},
+	{name: 'Olga',  active: true, a: 6, c:4},	
 ];
 const info = {
 	key1  : 'val1',
@@ -19,7 +26,9 @@ const info = {
 	key3  : ['val4a', 'val4b'],
 };
 
+
 const server = new Server({
+	//icon:
 	items: [
 		'<p>1: Hello World!</p>',
 		()=>'<p>2: Hello World!</p>',
@@ -64,10 +73,15 @@ const server = new Server({
 		tablePage: {
 			table: {
 				data,
-				childsWidth: 3,
+				name   : 'byActive0',
+				filter : new sMon.GroupBy('active'),
+				childsWidth: 6,
+				usePieAsPageIcon: true,
 				tabs: {
-					active  : row=>!!row.active,
-					pasive  : row=>row.active ? false : {...row, active:undefined}, //hide col `active`
+					active   : row=>!!row.active,
+					pasive   : row=>row.active ? false : {...row, active:undefined}, //hide col `active`
+					byActive : new sMon.GroupBy('active'),
+					
 					someTab1 : 'someTab1',
 					someTab2 : 'someTab2',
 					someTab3 : 'someTab3',
@@ -97,7 +111,7 @@ const server = new Server({
 					panel5: {table:data},
 				}
 			}
-		}
+		}		
 	},
 });
 app.use(server.middleware);

@@ -2,7 +2,8 @@ const assert    = require('node:assert');
 const mustBe    = require('hkey-must-be');
 const Page      = require('./Page.js');
 const pjson     = require('../../../package.json');
-
+const md5       = require('md5');
+ 
 const defaultName = 'sMon';
 class Server extends Page {	
 	constructor(options){
@@ -26,6 +27,7 @@ class Server extends Page {
 			badge    : await this.getBadge(req),
 			name     : this.name,
 			url      : this.url(req),
+			icon     : await this.getIcon(req),
 		});
 	}
 	$path() {return '/'}
@@ -49,13 +51,43 @@ class Server extends Page {
 	isActive(req){
 		return req.sMon.path === this.path || req.sMon.path==='' || req.sMon.path==='/';
 	}
+	async getFavicon(req){
+		return await this.option('favicon', req, 'string', true, true) || await this.getIcon(req)
+	}
 	async respond(req, res, next){
 		this.init();
+		if(req.sMon.path === '/favicon.svg' || req.sMon.path === 'favicon.svg'){
+			const icon = this.getFavicon(req); 
+			if(icon){
+				res.set('Content-Type', 'image/svg+xml');
+				res.set('Max-Age'     , '14400');
+				res.send(icon);
+			} else {
+				res.status(404).send('favicon.svg not found');
+			}
+			return;
+		}
 		try{
 			res.send(await this.renderPage(req));
 		} catch(e){
 			console.error(e);
 			res.status(e.httpStatus || 500).send(''+e);
+		}
+	}
+	
+	async getIconUrl(req){
+		try{
+			const icon = await this.getFavicon(req);
+			if(!icon){
+				return '';
+			}
+			if(icon.includes('<')){
+				return icon.includes('<svg') ? this.url(req, 'favicon.svg')+'?md5='+md5(icon) : '';
+			} else {
+				return `https://icons.getbootstrap.com/assets/icons/${icon}.svg`;
+			}
+		} catch(e){
+			console.error(e);
 		}
 	}
 	findPage(path, pos=0){
@@ -69,6 +101,8 @@ class Server extends Page {
 			inlineJS  : await this.template('js', req),
 			inlineCSS : await this.template('css', req),
 			sidebar   : await this.renderSidebar(req),
+			iconUrl   : await this.getIconUrl(req),
+			
 		});
 	}
 	_middlewareCb(prefix, req, res, next){
