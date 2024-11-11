@@ -82,5 +82,20 @@ h2 .sMon-icon .sMon-pie-icon, h2 .sMon-icon{
 .smon-server-link-div .sMon-icon, .smon-server-link-div .sMon-icon .sMon-pie-icon{
 	width   : 20px; 
 }
-	
-	
+.pie-svg path.pie-segment {
+	opacity: 0.8;
+	transition: opacity 0.3s;
+}	
+
+.pie-svg path.pie-segment-hover, 
+.pie-svg path.pie-segment:hover{
+	opacity: 1;
+}	
+
+tr.pie-segment-hover >td,
+tr.pie-segment:hover >td,
+table.dataTable > tbody > tr.pie-segment-hover >td,
+table.dataTable > tbody > tr.pie-segment:hover >td{
+	transition: background-color 0.5s;
+	background-color: #D3D3D3;	
+} 	

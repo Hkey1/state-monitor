@@ -27,13 +27,16 @@ module.exports = function calcPieHTML(data, opts={}){
 			endAngle    = startAngle + angle;
 			const cur   = (''
 				+tag('line', {
+					...(row.lineAttrs || {}),
 					x1: radius, 
 					y1: radius, 
 					x2: (Math.cos(endAngle)*radius+radius), 
 					y2: (Math.sin(endAngle)*radius+radius), 
-					stroke: color
+					stroke: color,
+					'class' : row.lineClass, 
 				})
 				+tag('path', `<title>${row.name||i}: ${row.count} ≈ ${Math.round(row.count*100/sum)}%</title>`, {
+					...(row.pathAttrs || {}),
 					d:( 
 						"M "+(radius)+","+(radius)+" "+
 						"L "+(Math.cos(startAngle)*radius+radius)+","+
@@ -44,7 +47,7 @@ module.exports = function calcPieHTML(data, opts={}){
 							 (Math.sin(endAngle)*radius+radius)+" "+
 						"Z"
 					),
-					fill  : color,
+					fill    : color,
 				})
 			);
 			startAngle = endAngle
@@ -52,3 +55,5 @@ module.exports = function calcPieHTML(data, opts={}){
 		}).join('')
 	+'</svg>');
 }
+
+

@@ -53,7 +53,17 @@ class TableViewGroupBy extends TableView{
 	}
 	
 	async getData(req){
-		return this.addColors(await super.getData(req));
+		let data = this.addColors(await super.getData(req));
+		data = data.map(row=>({...row}));
+		data.forEach((row,i)=>{
+			const id      = `${this.id}-${i}`;
+			const classes = `pie-segment pie-segment-${id}`;
+			const attrs   = {'data-pie-segment-id' : id, 'class':classes};
+			row._$$$pathAttrs = attrs;
+			row._$$$rowAttrs  = attrs;
+		});
+		
+		return data;
 	}
 	async renderContent(req, data=undefined){
 		try{
@@ -105,6 +115,7 @@ class TableViewGroupBy extends TableView{
 			name : keyCol+'='+row[keyCol],
 			color: row.color,
 			count: row.count,
+			pathAttrs : row._$$$pathAttrs,
 		})), opts);
 	}
 	filterColsNames(cols){

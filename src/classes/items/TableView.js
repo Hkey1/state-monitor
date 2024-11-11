@@ -4,6 +4,7 @@ const Tab            = require('./Tab.js');
 const AbstractItem   = require('./AbstractItem.js');
 const AbstractFilter = require('../filters/AbstractFilter.js');
 const lib            = require('../../lib.js');
+const tag            = require('../../functions/tag.js');
 
 class TableView extends Tab{
 	static parentOptionsKey  = false
@@ -107,7 +108,7 @@ class TableView extends Tab{
 		const cols   = [];
 		data.forEach(row=>{
 			Object.keys(row).forEach(col=>{
-				if(!(col in wasCol) && row[col]!==undefined){
+				if(!(col in wasCol) && row[col]!==undefined && !col.startsWith('_$$$')){
 					cols.push(col);
 					wasCol[col] = true; 
 				}
@@ -125,11 +126,11 @@ class TableView extends Tab{
 			isDataTablesNavHide: typeof(dataTables)==='object' && dataTables.___hideNav,
 			header     : '<tr>'+this.filterColsNames(cols).map(col=>'<th>'+col+'</th>').join('')+'</tr>',
 			width      : this.getWidth(),
-			body       : data.map(row=>{
-				return ('<tr>'
-					+cols.map(col=>'<td>'+((col in row) ? row[col] : '-')+'</td>').join('')
-				+'</tr>')
-			}).join('')
+			body       : data.map(row=>tag(
+				'tr', 
+				cols.map(col=>'<td>'+((col in row) ? row[col] : '-')+'</td>').join(''),
+				row._$$$rowAttrs || {}
+			))			
  		});		
 	}
 	onInit(){
