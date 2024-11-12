@@ -3,22 +3,26 @@
 	margin-left: 15px;
 }
 	#sidebar ul.nav ul.nav{
-		padding-left: 15px;
-	}
-	#sidebar ul.nav ul.nav ul.nav{
 		padding-left: 30px;
 	}
-	#sidebar ul.nav ul.nav ul.nav ul.nav{
-		padding-left: 45px;
+	#sidebar ul.nav ul.nav a.nav-link{
+		padding-top: 4px;
+		padding-bottom: 4px;
 	}
-	#sidebar ul.nav ul.nav ul.nav ul.nav ul.nav{
+	#sidebar ul.nav ul.nav ul.nav{
 		padding-left: 60px;
 	}
+	#sidebar ul.nav ul.nav ul.nav ul.nav{
+		padding-left: 90px;
+	}
+	#sidebar ul.nav ul.nav ul.nav ul.nav ul.nav{
+		padding-left: 120px;
+	}
 	#sidebar ul.nav ul.nav ul.nav ul.nav ul.nav ul.nav{
-		padding-left: 75px;
+		padding-left: 150px;
 	}
 	#sidebar ul.nav ul.nav ul.nav ul.nav ul.nav ul.nav ul.nav{
-		padding-left: 90px;
+		padding-left: 180px;
 	}
 	#sidebar .nav-link.link-dark{
 		opacity: 0.7;
@@ -70,18 +74,41 @@ div.sMon-table-noDtNav div.dt-container div.dt-layout-row.dt-layout-table {
 	margin: 0;
 }	
 	
-.sMon-icon, .sMon-icon  .sMon-pie-icon{
+
+.sMon-icon, 
+.sMon-icon .sMon-pie-icon,
+.sMon-icon > img,
+.sMon-icon > image{
 	display : inline-block;
 	width   : 16px; 
 }
+.sMon-icon-svg-url{
+	vertical-align: baseline;
+	height : 16px; 
+}
 
-
-h2 .sMon-icon .sMon-pie-icon, h2 .sMon-icon{
-	width   : 30px; 
+h2 .sMon-icon, 
+h2 .sMon-icon .sMon-pie-icon,
+h2 .sMon-icon > img,
+h2 .sMon-icon > image{
+	width   : 25px; 
 }	
-.smon-server-link-div .sMon-icon, .smon-server-link-div .sMon-icon .sMon-pie-icon{
+h2 .sMon-icon-svg-url{
+	height : 25px; 
+}
+
+
+.smon-server-link-div .sMon-icon, 
+.smon-server-link-div .sMon-icon .sMon-pie-icon,
+.smon-server-link-div .sMon-icon > img,
+.smon-server-link-div .sMon-icon > image{
 	width   : 20px; 
 }
+.smon-server-link-div .sMon-icon-svg-url{
+	height : 20px; 
+}
+
+
 .pie-svg path.pie-segment {
 	opacity: 0.8;
 	transition: opacity 0.3s;
@@ -92,10 +119,10 @@ h2 .sMon-icon .sMon-pie-icon, h2 .sMon-icon{
 	opacity: 1;
 }	
 
-tr.pie-segment-hover >td,
-tr.pie-segment:hover >td,
+tr.pie-segment-hover > td,
+tr.pie-segment:hover > td,
 table.dataTable > tbody > tr.pie-segment-hover >td,
 table.dataTable > tbody > tr.pie-segment:hover >td{
 	transition: background-color 0.5s;
-	background-color: #D3D3D3;	
+	background-color: #EEEEEE;	
 } 	

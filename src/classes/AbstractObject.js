@@ -48,11 +48,6 @@ class AbstractObject{
 		});
 	}
 	getInitPropertyNames(){
-		return this.getAllMethodsNames()
-			.filter(key=>key[0]==='$')
-			.map(key=>key.substring(1))			
-	}
-	getAllMethodsNames(){
 		let proto = this, res  = [];
 		while(proto = Object.getPrototypeOf(proto)){
 			if(proto.constructor === AbstractObject){
@@ -64,8 +59,8 @@ class AbstractObject{
 		return res.filter(key=>{
 			if(key in was) return false;
 			was[key] = true;
-			return (typeof(this[key])==='function' && key!=='constructor')
-		}); 
+			return (key[0]==='$' && typeof(this[key])==='function' && key!=='constructor')
+		}).map(key=>key.substring(1)); 
 	}  
 };
 

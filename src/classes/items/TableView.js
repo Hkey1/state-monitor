@@ -130,7 +130,7 @@ class TableView extends Tab{
 				'tr', 
 				cols.map(col=>'<td>'+((col in row) ? row[col] : '-')+'</td>').join(''),
 				row._$$$rowAttrs || {}
-			))			
+			)).join('')			
  		});		
 	}
 	onInit(){
