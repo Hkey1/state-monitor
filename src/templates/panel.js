@@ -1,5 +1,5 @@
-module.exports = async (req, {content, expand, id, name, fullName, details, badge, parentId, tooltip}, item)=>`
-	<div class="accordion-item" id="${id}">
+module.exports = async (req, {content, expand, id, name, fullName, details, badge, parentId, tooltip, isInCol}, item)=>`
+	<div class="accordion-item ${isInCol ? 'sMon-panel-inCol': ''}" id="${id}">
 		<h2 class="accordion-header">
 			<button 
 				class="accordion-button ${expand ? ``: `collapsed`}" 

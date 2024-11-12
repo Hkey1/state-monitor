@@ -19,16 +19,17 @@ class Panel extends Items{
 		return this.options.expand ?? (parentOpt==='auto' ? (this.i === 0) : parentOpt);		
 	}
 	async renderContent(req){
-		return this.neadToHideHead ? content : await this.template('panel', req, {
-			expand   : this.expand,
-			content  : await super.renderContent(req), 
-			id       : this.id,
-			parentId : this.parent.id,
-			name     : this.name,
-			fullName : await this.option('fullName', req, 'string', true, true),
-			badge    : await this.getBadge(req),
-			details  : await this.option('details',  req, 'string', true, true),
-			tooltip  : await this.option('tooltip',  req, 'string', true, true),
+		return await this.template('panel', req, {
+			expand    : this.expand,
+			content   : await super.renderContent(req), 
+			id        : this.id,
+			parentId  : this.parent.id,
+			name      : this.name,
+			fullName  : await this.option('fullName', req, 'string', true, true),
+			badge     : await this.getBadge(req),
+			details   : await this.option('details',  req, 'string', true, true),
+			tooltip   : await this.option('tooltip',  req, 'string', true, true),
+			isInCol   : this.neadBeCol,			
 		});
 	}
 };

@@ -126,3 +126,7 @@ table.dataTable > tbody > tr.pie-segment:hover >td{
 	transition: background-color 0.5s;
 	background-color: #EEEEEE;	
 } 	
+
+.sMon-panel-inCol{
+	margin-bottom: 24px;	
+}
