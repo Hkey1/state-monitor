@@ -3,32 +3,29 @@ const mustBe           = require('hkey-must-be');
 const AbstractItem     = require('./AbstractItem.js');
 
 class InfoTable extends AbstractItem{
-	static parentOptionsKey  = 'infoTable'
-	static parentOptionsKeys = []
+	static shortKey   = 'infoTable'
+	static shortKeyTo = false
+	
+	static _options = ['data'];
 	constructor(options){
 		super(options);
 	}	
 	normalizeOptions(options){
-		if(typeof(options)==='function' || (typeof(options)==='object' && !Array.isArray(options) && !('info' in options) && !('infoTable' in options) && !(options instanceof AbstractItem))){
-			options = {info: options};
-		}
-		if(options.infoTable){
-			assert(!options.info);
-			options.info = options.infoTable;
-			delete options.infoTable; 
+		if(typeof(options)==='function' || (typeof(options)==='object' && !Array.isArray(options) && !('data' in options) && !(options instanceof AbstractItem))){
+			options = {data: options};
 		}
 		mustBe.normalObject(options);
-		if(typeof(options.info)!=='function'){
-			mustBe.normalObject(options.info);
+		if(typeof(options.data)!=='function'){
+			mustBe.normalObject(options.data);
 		}
 		return options;
 	}
 	async renderContent(req){
 		let data;
 		try {
-			data = await this.option('info', req, 'object', false);
+			data = await this.option('data', req, 'object', false);
 		} catch(e){
-			console.log(e);
+			console.error(e);
 			return e+''
 		}
 		const rowsPromises = Object.entries(data).map(async ([key, val])=>{

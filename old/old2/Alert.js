@@ -4,7 +4,8 @@ const AbstractItem     = require('./AbstractItem.js');
 const HTML             = require('./HTML.js');
 
 class Alert extends HTML{
-	static parentOptionsKey = 'alert'	
+	static shortKey = 'alert'	
+	static _options = ['type'];
 	async renderContent(req){
 		return await this.template('alert', req, {
 			content   : await super.renderContent(req),

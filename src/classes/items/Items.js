@@ -4,17 +4,17 @@ const AbstractItem = require('./AbstractItem.js');
 const lib          = require('../../lib.js');
 
 class Items extends AbstractItem{
-	static parentOptionsKey       = 'items'
-	static parentOptionsKeys      = []
+	static shortKey   = 'items'
+	static shortKeyTo = false	
 
-	static canItemsBeObject       = false
 	static childNameMustBeUnique  = false
 	static childNameMustBeDefined = false
 	
-	get canItemsBeObject()       {return this.constructor.canItemsBeObject}
 	get childNameMustBeUnique()  {return this.constructor.childNameMustBeUnique}
 	get childNameMustBeDefined() {return this.constructor.childNameMustBeDefined}
 	
+	static _options          = ['items'];
+		
 	constructor(options){
 		super(options);
 		this.items             = [];
@@ -25,7 +25,6 @@ class Items extends AbstractItem{
 		assert(!(this.options.items instanceof AbstractItem));
 		
 		if(!Array.isArray(this.options.items)){
-			if(!this.canItemsBeObject) throw new Error(`${this.constructor.name} cant contains items as object`);			
 			Object.entries(this.options.items).forEach(([name, item])=>{
 				this.push(this.normalizeChildItem(item, name))
 			});
@@ -35,31 +34,31 @@ class Items extends AbstractItem{
 			})
 		}
 	}
-	static toInstance(opts, name=undefined){
-		if(opts instanceof this){
-			return opts;
-		} else if(opts instanceof AbstractItem){
-			assert(!(opts instanceof lib.base.Page));
-			return new this({items: [opts], name: name||opts.name});
-		} else {
-			mustBe.oneOf(typeof(opts), ['function','object', 'string']);
-			if(typeof(opts)==='object'){
-				Array.isArray(opts) || mustBe.normalObject(opts);
-			} 			
-			return new this(opts); 
+	normalizeItems(options){
+		mustBe.normalObject(options);
+		const itemsKeys = this.getChildsKeys(options);
+		if(options.items){
+			Array.isArray(options.items) || mustBe.normalObject(options);
+			if(itemsKeys.length){
+				throw new Error(`Bad options: ${itemsKeys.join(', ')}. Options already have a items`);
+			}
+		} else if(itemsKeys.length){
+			options.items = {};
+			itemsKeys.forEach(key=>{
+				options.items[key.substring(1)] = options[key];
+				delete options[key];
+			});
+		} else if(this.getSpecialKeys(options).length===0 && Object.keys(options).length!==0){
+			const items = {}, opts = {}, map = this.allOptionsMap;
+			Object.keys(options).forEach(key=>{
+				(((key in map) || key[0]==='_') ? opts : items)[key] = options[key]
+			});
+			options = {...opts, items};
 		}
+		return options;
 	}
-	async getBadge(req, depth=0){
-		try{			
-			if(this.options.badge!==undefined){
-				return depth===0 ? await this.option('badge', req, 'string') : '';
-			} else if(this.items.length===1 && this.items[0].getBadge){
-				return await this.items[0].getBadge(req, depth+1);
-			} else return '';
-		} catch(e){
-			console.error(e);
-			return 'err';
-		}
+	getChildsKeys(options){
+		return Object.keys(options).filter(key=>key[0]==='$')
 	}
 	normalizeOptions(options){
 		const type = typeof(options);
@@ -75,23 +74,78 @@ class Items extends AbstractItem{
 		if(Array.isArray(options)){
 			return {items:options};
 		} 		
+		
 		if(options instanceof AbstractItem){
 			assert(!(options instanceof lib.base.Page));
 			assert(options.constructor!==AbstractItem);
 			return {items:[options]};
 		} 
-		assert(!(options instanceof Promise));	
 		
+
 		const specKeys = this.getSpecialKeys(options);
-		if(specKeys.length===0){
-			return {...options, items:[]};
-		} 
-		if(specKeys.length===1 && specKeys[0]===this.constructor.parentOptionsKey){
-			return {...options, items: options[specKeys[0]]};
+		if(specKeys.length!==0 && (specKeys.length!==1 || specKeys[0]!=='items')){
+			options.items = specKeys.map(key=>{
+				const item = lib.createItemByShortKey(key, options, this);
+				delete options[key];
+				return item;
+			})
 		}
-		return {
-			...options,
-			items : specKeys.map(key=>lib.createItemByParentOptionsKey(key, options, this))
+		options = this.normalizeItems(options);
+		
+		return options;
+	}
+	$iconChild(field='useIconInParents',isFromParent=false, haveField='haveIcon', method='$iconChild', onUndefined=true){
+		onUndefined &&= this[field]!==false; 
+		if(this[haveField] && (!isFromParent || this[field] || onUndefined)){			
+			return this;
+		}
+		onUndefined &&= this.items.length===1; 
+		for(let i=0; i<this.items.length; i++){
+			const item = this.items[i];
+			if(item[field]!==false){
+				const res = ((item instanceof Items) 
+					? item[method](field, true, haveField, method, onUndefined) 
+					: ((item[haveField] && (item[field]??onUndefined)) ? item : undefined)
+				);
+				if(res){
+					return res;
+				}
+			}
+		}
+	}
+	$badgeChild(field='useBadgeInParents', isFromParent=false, haveField='haveBadge', method='$badgeChild'){
+		return this.$iconChild(field, isFromParent, haveField, method);
+	}
+	
+	async getBadgeOrIcon(badge, req){	
+		let   child  = badge ? this.badgeChild : this.iconChild;
+		const method = badge ? 'getBadge'      : 'getIcon';
+		if(!child){
+			return undefined; 
+		} else if(child===this){
+			return await super[method](req)
+		} else {
+			return await child[method](req)
+		}
+	}
+	async getIcon(req){	
+		return await this.getBadgeOrIcon(false, req);
+	}
+	async getBadge(req){	
+		return await this.getBadgeOrIcon(true, req);
+	}
+	static toInstance(opts, name=undefined){
+		if(opts instanceof this){
+			return opts;
+		} else if(opts instanceof AbstractItem){
+			assert(!(opts instanceof lib.base.Page));
+			return new this({items: [opts], name: name||opts.name});
+		} else {
+			mustBe.oneOf(typeof(opts), ['function','object', 'string']);
+			if(typeof(opts)==='object'){
+				Array.isArray(opts) || mustBe.normalObject(opts);
+			} 			
+			return new this(opts); 
 		}
 	}
 	onPushed(){
@@ -129,7 +183,10 @@ class Items extends AbstractItem{
 			}
 			return new lib.classes.HTML(res) 
 		}	
-		assert.equal(type, 'object');
+		if(type!=='object'){
+			throw new Error(this.constructor.name+`: type=${type} opts=${opts} name=${name}`);
+		}
+		//assert.equal(type, 'object');
 		return new Items(opts);
 	}
 	setItemName(item, name){

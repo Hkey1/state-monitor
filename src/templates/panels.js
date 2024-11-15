@@ -1,5 +1,5 @@
-module.exports = async (req, {content, neadBeRow, id})=>`
-	<div id="${id}" class="sMon-panels accordion ${neadBeRow?`row`:``}">
+module.exports = async (req, {content, id, classes})=>`
+	<div id="${id}" class="sMon-panels accordion ${classes||''}">
 		${content}
 	</div>
 `;

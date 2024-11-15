@@ -8,7 +8,6 @@ const tag            = require('../../functions/tag.js');
 
 class TableView extends Tab{
 	static parentOptionsKey  = false
-	static parentOptionsKeys = []	
 
 	normalizeOptions(options){
 		const type = typeof(options);
@@ -32,13 +31,32 @@ class TableView extends Tab{
 			throw new Error('TableView.filter must be undefined, function, or instanceof AbstractFilter. Given:'+typeof(options.filter));
 		}
 		
-			
-		//AbstractFilter
-		//options.data || assert.equal(typeof(options.filter), 'function');
 		assert(!options.data || Array.isArray(options.data));
 
 		options.items   = [];
 		return options;
+	}
+	$useIconInParents(field='useIconInParents'){
+		return this.options[field] ?? (this.i==0 && this.parent[field]); //this.parent.items.length==1
+	}	
+	$useIconInPage(){
+		return this.$useIconInParents('useIconInPage');
+	}
+	$iconChild(field='useIconInParents',isFromParent=false){
+		if(!isFromParent && field==='useIconInParents' && this.items.length===1){
+			const item = this.items[i];
+			if(item.haveIcon && item.useIconInParents!==false){
+				return item;
+			}
+		}
+		return super.$iconChild(field, isFromParent);
+	}
+	async getIcon(req, data=undefined){		
+		if('icon' in this.options){
+			return await this.option('icon', req, 'string', true, true);
+		} else if(this.i===0 && 'icon' in this.parent.options){
+			return await this.parent.option('icon', req, 'string', true, true);
+		}
 	}
 	async getBadge(req, depth=0){
 		try{
@@ -79,12 +97,12 @@ class TableView extends Tab{
 			}
 		}).filter(row=>row!==null);
 	}
-	filterColsNames(cols){
+	filterColsNames(cols, data){
 		return cols;
 	}
 
-	calcDataTablesOpts(dataTables, nRows){
-		if(nRows<=10){			
+	calcDataTablesOpts(dataTables, data){
+		if(data.length<=10){			
 			dataTables.searching   ??= false;
 			dataTables.bPaginate   ??= false;
 			dataTables.paginate    ??= false;
@@ -117,15 +135,15 @@ class TableView extends Tab{
 		const nRows = await this.nRows(req);
 		let dataTables = this.options.dataTables ?? this.parent.options.dataTables;
 		if(typeof(dataTables)==='object'){
-			dataTables = this.calcDataTablesOpts({...dataTables}, nRows);
+			dataTables = this.calcDataTablesOpts({...dataTables}, data);
 		}		
 		return await this.template('table', req, {
 			id         : this.id,
 			dataTables, 
 			nRows, 
 			isDataTablesNavHide: typeof(dataTables)==='object' && dataTables.___hideNav,
-			header     : '<tr>'+this.filterColsNames(cols).map(col=>'<th>'+col+'</th>').join('')+'</tr>',
-			width      : this.getWidth(),
+			header     : '<tr>'+this.filterColsNames(cols, data).map(col=>'<th>'+col+'</th>').join('')+'</tr>',
+			width      : this.options.width,
 			body       : data.map(row=>tag(
 				'tr', 
 				cols.map(col=>'<td>'+((col in row) ? row[col] : '-')+'</td>').join(''),

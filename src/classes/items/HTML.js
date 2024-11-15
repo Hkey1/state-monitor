@@ -4,7 +4,8 @@ const AbstractItem     = require('./AbstractItem.js');
 const lib              = require('../../lib.js');
 
 class HTML extends AbstractItem{
-	static parentOptionsKey = 'html'
+	static shortKey = 'html'
+	static _options = ['html'];
 	normalizeOptions(options){
 		assert(!(options instanceof Promise));
 		assert(!(options instanceof AbstractItem));

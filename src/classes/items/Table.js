@@ -1,84 +1,112 @@
 const assert         = require('node:assert');
 const mustBe         = require('hkey-must-be');
-const Tabs           = require('./Tabs.js');
+const Tab            = require('./Tab.js');
 const AbstractItem   = require('./AbstractItem.js');
 const lib            = require('../../lib.js');
 const AbstractFilter = require('../filters/AbstractFilter.js');
 const GroupBy        = require('../filters/GroupBy.js');
+const tag            = require('../../functions/tag.js');
 
+class Table extends Tab {	
+	static _options = ['data', 'dataTables', 'filter'];
 
-class Table extends Tabs {	
-	static parentOptionsKey  = 'table'
-	static parentOptionsKeys = ['hideTabsHead']	
-	async getBadge(req, depth=0){
+	static shortKey  = 'table'
+	normalizeOptions(options){
+		if(Array.isArray(options)){
+			options = {data: options};
+		} else if(typeof(options)==='function' || options instanceof AbstractFilter){
+			options = {filter: options};
+		}
+		mustBe.normalObject(options);
+		options.dataTables ??= {};		
+		this.checkSpecialKeys(options, []);
+		return options;
+	}
+	async getData(req){
+		const data = await((this.options.data ? this : this.parent).option('data', req, 'array'));
+		
+		if(!this.options.filter){
+			return data;
+		} else if (this.options.filter instanceof AbstractFilter){
+			return await this.options.filter.filter(data, this, req);
+		} else return data.map((rawRow, i)=>{
+			const row = {...rawRow};
+			const res = this.options.filter(row, req, data, i, this);
+			if(!res){
+				return null;
+			} else if(res===true){
+				return row;
+			} else {
+				mustBe.normalObject(res);
+				return res;
+			}
+		}).filter(row=>row!==null);
+	}
+	$haveBadge(){return true}
+	async getBadge(req){
 		try{
 			if(this.options.badge!==undefined){
-				return depth===0 ? await this.option('badge', req, 'string') : '';
+				return await super.getBadge(req);
 			} else {
-				return (await this.option('data', req, 'array')).length + '';
+				return (await this.getData(req)).length + '';
 			}
 		} catch(e){
 			console.error(e);
 			return 'err';
 		}
 	}				
-	normalizeOptions(options){
-		if(Array.isArray(options) || typeof(options)==='function'){
-			options = {data: options};
-		}
-		mustBe.normalObject(options);
-		if(options.table){
-			if(Array.isArray(options.table) || typeof(options.table)==='function'){
-				assert(!options.data);
-				options = {...options, data: options.table, table: undefined};
-			} else {
-				mustBe.normalObject(options.table);
-				assert(options.data   || options.table.data);
-				assert(!options.data  || !options.table.data);
-				assert(!options.items || !options.table.items);
-				assert(!options.tabs  || !options.table.tabs);
-				options = {...options, ...options.table, table  : undefined};
-			}
-		}
-		assert(options.data);
-		assert(!options.items || !options.tabs);
-		
-		options.dataTables   ??=  {autoWidth: true}
-		options.hideTabsHead ??= 'auto';
-
-		if(options.tabs){
-			options.items = options.tabs;
-			delete options.tabs;
-		}
-
-		assert(typeof(options.items ||= []), 'object')
-		Array.isArray(options.items) || mustBe.normalObject(options.items);
-		
-		const name   = (options.name   || 'all');
-		const filter = (options.filter || (()=>true));
-		const child  = {name, filter};		
-		if(Array.isArray(options.items)){
-			options.items = [child, ...options.items]; 
-		} else if(!(name in options.items)){
-			options.items = {[name] : child, ...options.items};
-		}
-		//options.badge ??= async (req)=> await this.items[0].option('badge', req, 'string');
-		const badKeys = this.getSpecialKeys(options).filter(key=>key!=='items');
-		if(badKeys.length){
-			throw new Error('Table not suport options keys : '+badKeys.join(', '))
-		}
-		return super.normalizeOptions(options);
+	filterColsNames(cols, data){
+		return cols;
 	}
-	castChildItem(opts, name=undefined){
-		if(opts instanceof GroupBy || (typeof(opts)==='object' && opts.filter instanceof GroupBy)){
-			return new lib.classes.TableViewGroupBy(opts);
-		} else return ((false
-		|| (opts instanceof AbstractFilter) 
-		|| (typeof(opts)==='function') 
-		|| (typeof(opts)==='object' && !Array.isArray(opts) && !(opts instanceof AbstractItem) && (opts.filter||opts.data)))
-			? new lib.classes.TableView(opts)
-			: super.castChildItem(opts, name)
-		)	
+	calcDataTablesOpts(dataTables, data){
+		if(data.length<=10){			
+			dataTables.searching   ??= false;
+			dataTables.bPaginate   ??= false;
+			dataTables.paginate    ??= false;
+			dataTables.bInfo       ??= false;
+			dataTables.info        ??= false;
+			dataTables.___hideNav  = true; 
+		}
+		return dataTables;
+	}
+	async renderContent(req, data=undefined){
+		try{
+			data ||= await this.getData(req);
+		} catch(e){
+			console.error(e);
+			return e+'';
+		}
+		if(data.length===0){
+			return 'no data';
+		}
+		const wasCol = {};
+		const cols   = [];
+		data.forEach(row=>{
+			Object.keys(row).forEach(col=>{
+				if(!(col in wasCol) && row[col]!==undefined && !col.startsWith('_$$$')){
+					cols.push(col);
+					wasCol[col] = true; 
+				}
+			});
+		})
+		let dataTables = this.options.dataTables;
+		dataTables = dataTables===true ? {} : dataTables;
+		if(typeof(dataTables)==='object'){
+			dataTables = this.calcDataTablesOpts({...dataTables}, data);
+		}		
+		return await this.template('table', req, {
+			id         : this.id,
+			dataTables, 
+			nRows : data.length, 
+			isDataTablesNavHide: typeof(dataTables)==='object' && dataTables.___hideNav,
+			header     : '<tr>'+this.filterColsNames(cols, data).map(col=>'<th>'+col+'</th>').join('')+'</tr>',
+			width      : this.options.width,
+			body       : data.map(row=>tag(
+				'tr', 
+				cols.map(col=>'<td>'+((col in row) ? row[col] : '-')+'</td>').join(''),
+				row._$$$rowAttrs || {}
+			)).join('')			
+ 		});		
 	}
 };
 

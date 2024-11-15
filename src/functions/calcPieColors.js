@@ -14,6 +14,7 @@ function hsv2hsl({h, s, v}) {
     }
     return {h, s, l};
 }
+
 module.exports = function calcPieColors(n){
 	n = (Array.isArray(n)) ? n.length : n;
 	assert.equal(typeof(n), 'number');

@@ -3,7 +3,7 @@ const mustBe        = require('hkey-must-be');
 const tag           = require('./tag.js');
 const calcPieColors = require('./calcPieColors.js');
 
-module.exports = function calcPieHTML(data, opts={}){
+module.exports = function pie(data, opts={}){
 	const colors           = calcPieColors(data);
 	let {width, hideNot, classes} = opts;
 	
@@ -11,31 +11,21 @@ module.exports = function calcPieHTML(data, opts={}){
 	width  = isNaN(1*width) ? width : width+'px'; 
 	
 	const radius = 100;
+	const sum  = data.reduce((s,row)=>s+1*row.count, 0);
+	const pi2  = 2 * Math.PI;
 	
-	
-	let sum = 0;
-	data.forEach(row=>sum+=1*row.count);
-	
-	let startAngle=0, endAngle;
-	
-	const res = [];
+	let startAngle=0.75*pi2;	
 	return (''
 	+`<svg class="pie-svg ${classes||''}" style="width:${width}" viewBox="0 0 ${2*radius} ${2*radius}" xmlns="http://www.w3.org/2000/svg">`
 		+data.map((row,i)=>{
-			const color   = (hideNot!==undefined && hideNot!==i && hideNot!==row.name) ? '#D3D3D3': row.color || colors[i]; 
-			const angle = row.count * 2 * Math.PI / sum;
-			endAngle    = startAngle + angle;
-			const cur   = (''
-				+tag('line', {
-					...(row.lineAttrs || {}),
-					x1: radius, 
-					y1: radius, 
-					x2: (Math.cos(endAngle)*radius+radius), 
-					y2: (Math.sin(endAngle)*radius+radius), 
-					stroke: color,
-					'class' : row.lineClass, 
-				})
-				+tag('path', `<title>${row.name||i}: ${row.count} ≈ ${Math.round(row.count*100/sum)}%</title>`, {
+			const color  = (hideNot!==undefined && hideNot!==i && hideNot!==row.name) ? '#D3D3D3': row.color || colors[i]; 
+			const angle  = row.count * pi2 / sum;
+			let endAngle = startAngle + angle;
+			endAngle     = endAngle > pi2 ? endAngle - pi2: endAngle;
+			endAngle     = endAngle < 0   ? pi2 - endAngle: endAngle;			
+
+			const cur   = (
+				tag('path', `<title>${row.name||i}: ${row.count} ≈ ${Math.round(row.count*100/sum)}%</title>`, {
 					...(row.pathAttrs || {}),
 					d:( 
 						"M "+(radius)+","+(radius)+" "+

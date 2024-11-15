@@ -12,6 +12,8 @@ const assetsDir   = dirname(dirname(__dirname))+'/assets/'
 const defaultName = 'sMon';
 
 class Server extends Page {	
+	static _options = ['sidebarWidth', 'favicon'];
+
 	constructor(options){
  		super(options);
 		this.name                 ??= defaultName;
@@ -35,10 +37,13 @@ class Server extends Page {
 			'datatables.css'    : {url: 'https://cdn.datatables.net/2.1.8/css/dataTables.dataTables.css', attrs:{...anonymous}},
 			'datatables.js'     : {url: 'https://cdn.datatables.net/2.1.8/js/dataTables.js',              attrs:{...anonymous}},
 			
-			'inline.css'        : {content: fs.readFileSync(assetsDir+'inline.css', "utf8"), inline: true},
-			'inline.js'         : {content: fs.readFileSync(assetsDir+'inline.js',  "utf8"), inline: true},  
+			'inline.css'        : {content: ()=>this.inline_css, inline: true},
+			'inline.js'         : {content: ()=>this.inline_js,  inline: true},  
 		});
  	}
+	$inline_css(){ return fs.readFileSync(assetsDir+'inline.css', "utf8")}
+	$inline_js() { return fs.readFileSync(assetsDir+'inline.js',  "utf8")}
+	
 	get files()   { return this._files.files; }
 	set files(val){ mustBe.normalObject(val); return this._files.files = val}
 	

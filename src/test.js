@@ -2,10 +2,13 @@ const express  = require('express');
 const sMon     = require('./index.js');
 
 const {Server, HTML, Page, Tabs, Table, InfoTable} = sMon;
-// Card, Cards
 
-const app    = express(); 
+//TODO Rows, Row, Col
+//TODO login Password
+//TODO tableGroupBy как бейдж считать число непустых строк
+//TODO tab fullName и details отображать в контенте
 
+const app  = express(); 
 const data = [
 	{name: 'Mark',  active: true, a: 1, b:2},
 	{name: 'Jack',  active: true, a: 3, c:4},
@@ -18,7 +21,20 @@ const data = [
 	{name: 'Mike',  active: true, a: 3, c:4},
 	{name: 'Oleg',  active: true, a: 5, c:7},
 	{name: 'Olga',  active: true, a: 6, c:4},	
+	{name: 'Rost',  active: true, a: 3, c:3},	
+	{name: 'Vlad',  active: true, a: 3, c:3},	
+	{name: 'Vadim',  active: false, a: 3, c:3},	
+	{name: 'Vano',  active: true, a: 3, c:3},	
+	{name: 'Lev',  active: true, a: 3, c:3},	
+	{name: 'Leo',  active: true, a: 3, c:3},	
+	{name: 'Sasha',  active: true, a: 3, c:3},	
+	{name: 'Masha',  active: true, a: 3, c:3},	
+	{name: 'Nickolo',  active: true, a: 3, c:3},		
 ];
+data.forEach(row=>{
+	row.latency = Math.round(100 * (Math.random() + Math.random() + Math.random()));
+})
+
 const info = {
 	key1  : 'val1',
 	key2  :  ['val2a', 'val2b'],
@@ -67,63 +83,93 @@ const server = new Server({
 		tabsPage: {
 			icon: 'segmented-nav',
 			tabs:{
-				tab1: 'this is tab1',
-				tab2: async ()=>'this is tab2',
-				tab3: {
-					html: 'this is tab3',
-					tabs : {
-						tab3a: 'this is tab3a',
-						tab3b: 'this is tab3b',
+				style: 'cards',
+				_width: 3,
+				items: {
+					tab1: 'this is tab1',
+					tab2: async ()=>'this is tab2',
+					tab3: {
+						html: 'this is tab3',
+						tabs : {
+							items: {
+								tab3a: 'this is tab3a',
+								tab3b: 'this is tab3b',
+							}
+						},
+						badge: ()=>'someBadge',					
+					},			
+					tab4: {
+						table: data,					
 					},
-					badge: ()=>'someBadge',					
-				},			
-				tab4: {
-					table: data,					
-				},
+				}
 			},
 		},
-		tablePage: {
-			table: {
+		tablesPage: {
+			tables: {
 				data,
-				name   : 'byActive0',
-				filter : new sMon.GroupBy('active'),
-				childsWidth: 6,
-				usePieAsPageIcon: true,
-				tabs: {
+				_width : 6,
+				items: {
+					all      : row=>true,
+					histo    : {groupBy: 'latency', ranges: [50, 100, 125, 150, 175, 200, Infinity], useIconInPage: true},
 					active   : row=>!!row.active,
 					pasive   : row=>row.active ? false : {...row, active:undefined}, //hide col `active`
-					byActive : new sMon.GroupBy('active'),
-					
-					someTab1 : 'someTab1',
-					someTab2 : 'someTab2',
-					someTab3 : 'someTab3',
-					someTab4 : 'someTab4',
-					someTab5 : 'someTab5',
-					someTab6 : 'someTab6',
+					tab1     : 'someTab1',
+					byActive : {groupBy: 'active'}, 
 				}
 			}
 		},
-		rowsPage: {
-			items: [
-				{childsWidth: 3, items: ['col1','col2','col3','col4','col5','col6','col7','col8','col9','col10']}
-			]			
+		paraPage: {	
+			tabs:{
+				style: 'paragraphs',
+				items: {
+					'p1': {
+						tabs:{
+							style: 'paragraphs',
+							items: {
+								p1a: {
+									tabs: {
+										style: 'paragraphs',
+										items: {
+											p1a1: 'this is p1a1',
+											p1a2: 'this is p1a2',
+										}
+									}
+								},
+								p1b: 'this is p1b',
+							}
+						}
+					},
+					'p2': 'this is p2'
+					
+				}
+			}
+		},
+		ulPage: {
+			list:{
+				i1: {
+					html  : 'this is i2',
+					badge : '123',  
+				},
+				i2: 'this is i2',
+				i3: 'this is i2',
+			}
 		},
 		infoPage: {	
-			infoTable : info,
+			infoTable : {data:info},
 		},
 		panelsPage: {	
 			panels: {
-				childsWidth: 3,
-				childsExpand: true,
+				_width: 3,
+				_expand: true,
 				items: {
 					panel1: 'this is panel1',
 					panel2: 'this is panel2',
 					panel3: 'this is panel3',
-					panel4: {html:'this is panel4', badge: 'dd1', tooltip:'some tooltip', details: 'some details'},
+					panel4: {html:'this is panel4', badge: 'dd1', tooltip:'some tooltip', details: 'some details', icon: 'amazon'},
 					panel5: {table:data},
 				}
 			}
-		}		
+		}
 	},
 });
 app.use(server.middleware);

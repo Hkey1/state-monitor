@@ -7,10 +7,42 @@ const AbstractObject = require('../AbstractObject.js');
 const countItemsByClass = {}; 
 
 class AbstractItem extends AbstractObject{
-	static parentOptionsKey  = false
-	static parentOptionsKeys = []
-	static isReplace         = false
-	static templates         = {};
+	static shortKey   = false
+	static shortKeyTo = undefined;
+	static isReplace  = false
+	static templates  = {};
+	static _options   = [
+		'parent', 
+		'name', 'isAutoName', 
+		'width', 
+		'icon', 'useIconInParents', 'useIconInPage',
+		'badge', 'useBadgeInParents', 'useBadgeInPage',
+		'templates',
+	];
+	static get allOptions(){
+		if(!this._allOptions || !this.hasOwnProperty('_allOptions')){
+			this._allOptions = [];
+			let Parent      = this; 
+			while(true){
+				if(Parent._options){
+					this._allOptions.push(...Parent._options)
+				}
+				if(Parent===AbstractItem){
+					break;
+				}
+				Parent = Object.getPrototypeOf(Parent.prototype).constructor;
+			}
+		}
+		return this._allOptions;
+	}
+	static get allOptionsMap(){
+		if(!this._allOptionsMap || !this.hasOwnProperty('_allOptionsMap')){
+			this._allOptionsMap = Object.fromEntries(this.allOptions.map(name=>[name, name]));
+		}
+		return this._allOptionsMap;
+	}
+	get allOptions()    {return this.constructor.allOptions};
+	get allOptionsMap() {return this.constructor.allOptionsMap};
 	
 	constructor(options){
 		super();
@@ -18,6 +50,7 @@ class AbstractItem extends AbstractObject{
 		assert(this.constructor !== AbstractItem); //Abstract
 
 		this.options = this.normalizeOptions(options);
+		this.checkOptions();
 		
 		mustBe.normalObject(this.options);		
 		mustBe.normalObject(this.options.templates ??= {})
@@ -30,8 +63,19 @@ class AbstractItem extends AbstractObject{
 
 		this.setId();
 	} 
-	async getIcon(req, data=undefined){		
+	checkOptions(){
+		const map = this.allOptionsMap;
+		Object.keys(this.options).forEach(key=>{
+			if(!(key in map) && key[0]!=='_'){
+				throw new Error(`${this.constructor.name}: bad option='${key}'. Allowed options: `+this.allOptions.join(', '));
+			}
+		});// && key[0]!=='$'
+	}
+	async getIcon(req){		
 		return await this.option('icon', req, 'string', true, true);
+	}
+	async getBadge(req){		
+		return await this.option('badge', req, 'string', true, true);
 	}
 	setId(){
 		const lc   = this.constructor.name.toLowerCase();
@@ -41,23 +85,32 @@ class AbstractItem extends AbstractObject{
 		countItemsByClass[lc]++;
 	}
 	onPushed(){
-		assert(this.parent!==this)
-		assert(this.parent===undefined || (this.parent instanceof AbstractItem))
-		if(!(this instanceof lib.base.Server) && !this.parent){
-			throw new Error(`${this.constructor.name} ${this.name||''}: this.parent=${this.parent}`);
+		if(this.parent){
+			assert(this.parent!==this);
+			assert(this.parent instanceof AbstractItem);
+		} else assert(this instanceof lib.base.Server);
+	}
+	onBeforeInit(){
+		if(this.parent){
+			const opts = this.parent.options;
+			Object.keys(opts).forEach(key=>{
+				if(key && key[0]==='_' && key.length>1){
+					this.options[key.substring(1)] ??= opts[key];
+				}
+			});
+			if(opts._){
+				Object.keys(opts._).forEach(key=>{
+					this.options[key] ??= opts[key];
+				});
+			}
 		}
+		super.onBeforeInit();
 	}
-	onParentPushed(){}
 	onInit(){
-		//console.log('onInit', this.constructor.name)
 		super.onInit();
-		assert(this.parent===undefined || (this.parent instanceof AbstractItem))
-		assert(this instanceof lib.base.Server || this.parent);
 		this.parents.forEach(parent=>assert(parent!==this));
-	}		
-	getWidth(){
-		return (this.options.width ?? (this.parent ? this.parent.options.childsWidth : undefined))
-	}
+	}	
+	onParentPushed(){}
 	$parents(){
 		let res = [], parent = this;
 		while(parent = parent.parent){
@@ -65,17 +118,31 @@ class AbstractItem extends AbstractObject{
 		}
 		return res;
 	}
+	$isH(){return false};
+	$h(){
+		return this.parents.find(parent=>parent.isH).h + 1;	
+	}
 	$thisAndParents(){  return [this, ...this.parents]}
 	$andParents(){      return this.thisAndParents; }
 	$isContentCol(){    return false }
 	$isContentRow(){    return false }
 	$isContentRows(){   return false }
-	$neadBeCol(){       return isColWidth(this.getWidth())}
-	$neadBeRow(){       return this.neadBeCol && this.isContentCol || (this.isPlainItems && isColWidth(this.options.childsWidth))};	
+	$neadBeCol(){       return isColWidth(this.options.width)}
+	$neadBeRow(){       return this.neadBeCol && this.isContentCol || (this.isPlainItems && isColWidth(this.options._width))};	
 	$neadBeRows(){      return this.neadBeRow};
 	$isAnyParentRow(){  return this.parent.isPlainItems && !this.parent.neadBeCol && !this.parent.isContentCol && (this.parent.neadBeRow  || this.parent.isContentRow  || this.parent.isAnyParentRow)};
 	$isAnyParentRows(){ return this.parent.isPlainItems && !this.parent.neadBeCol && !this.parent.isContentCol && (this.parent.neadBeRows || this.parent.isContentRows || this.parent.isAnyParentRows)};
 	$isPlainItems() {   return false }
+
+
+	$useIconInParents(){return this.options.useIconInParents;}
+	$useIconInPage(){return this.options.useIconInPage;}
+	$useBadgeInParents(){return this.options.useBadgeInParents;}
+	$useBadgeInPage(){return this.options.useBadgeInPage;}
+	
+	$haveIcon(){return ('icon' in this.options)}
+	$haveBadge(){return ('badge' in this.options)}
+	
 	checkSpecialKeys(options, allowed=[]){
 		const badKeys = this.getSpecialKeys(options).filter(key=>!allowed.includes(key));//lib.normalizeKey(key)
 		if(badKeys.length){
@@ -84,22 +151,17 @@ class AbstractItem extends AbstractObject{
 	}
 	async renderBody(req, content=undefined){
 		assert(this.wasInit);
-		const width = this.getWidth();
+		const width = this.options.width;
 		content ??= await this.renderContent(req); 
-		content = (this.neadBeCol  && !this.isContentCol)                            ? await this.template('col',  req, {content, width: this.getWidth()})      : content;
+		content = (this.neadBeCol  && !this.isContentCol)                            ? await this.template('col',  req, {content, width: this.options.width})      : content;
 		content = (!this.neadBeCol && !this.isContentCol &&width && !isColWidth(width)) ? `<div style="width:${width}${!isNaN(1*width)?'':'px'}">${content}</div>` : content;
 		content = (this.neadBeRow  && !this.isContentRow  && !this.isAnyParentRow)      ? await this.template('row',  req, {content})                              : content;
 		content = (this.neadBeRows && !this.isContentRows && !this.isAnyParentRows)     ? await this.template('rows', req, {content})                              : content;
 		return content;
 	}	
-	async template(name, req, data={}){ 
+	findTemplate(name){ 
 		assert(this.wasInit);
-	
 		mustBe.notEmptyString(name);
-		mustBe.normalObject(req);
-		mustBe.normalObject(data);
-		mustBe.normalObject(req.sMon);
-		
 		let template;
 		const parents = this.andParents, len = parents.length;
 		for(let i=0; i<len; i++){
@@ -113,6 +175,18 @@ class AbstractItem extends AbstractObject{
 			}
 		}
 		template ??= lib.templates[name];
+		return template;
+	}
+	
+	async template(name, req, data={}){ 
+		assert(this.wasInit);
+	
+		mustBe.notEmptyString(name);
+		mustBe.normalObject(req);
+		mustBe.normalObject(data);
+		mustBe.normalObject(req.sMon);
+		
+		const template = this.findTemplate(name);
 		
 		if(template===undefined)            throw new Error(`${this.constructor.name} template '${name}' not found`);	
 		if(typeof template !== 'function')	throw new Error(`${this.constructor.name} typeof template '${name}' = ${typeof template}. Expected: function`);
@@ -168,9 +242,7 @@ class AbstractItem extends AbstractObject{
 		}
 	}
 	getSpecialKeys(options){
-		const res = lib.getSpecialKeys(options);
-		//console.log(this.constructor.name, Object.keys(options), res);
-		return res;
+		return lib.getSpecialKeys(options);
 	}
 }; 
 module.exports = AbstractItem;

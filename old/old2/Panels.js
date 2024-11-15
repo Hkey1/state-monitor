@@ -5,10 +5,8 @@ const AbstractItem = require('./AbstractItem.js');
 const lib          = require('../../lib.js');
 
 class Panels extends Items{
-	static parentOptionsKey  = 'panels'
-	static parentOptionsKeys = ['childsExpand']	
+	static shortKey  = 'panels'
 	
-	static canItemsBeObject       = true
 	static childNameMustBeUnique  = false
 	static childNameMustBeDefined = true
 
@@ -20,20 +18,14 @@ class Panels extends Items{
 			options = {...options, ...options.panels}
 			delete options.panels;
 		}
-		//console.log(100,options);
-		options = (Array.isArray(options) || (options.panels===undefined && options.items===undefined && options.childsExpand===undefined && Object.keys(options).length)) 
+		options = (Array.isArray(options) || (options.panels===undefined && options.items===undefined && options._expand===undefined && Object.keys(options).length)) 
 			? {items: options} : options;
 
-		//console.log(200,options);
-		
 		if(!options.items && options.panels){
 			options.items = options.panels;
 			delete options.panels;
 		}
-		
-		mustBe.oneOf(options.childsExpand ??= 'auto', [true, false, 'auto']);
 		this.checkSpecialKeys(options, ['items']);
-		
 		return options;
 	}
 	castChildItem(opts, name=undefined){

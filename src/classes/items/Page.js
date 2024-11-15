@@ -12,8 +12,9 @@ const E404         = require('../PageNotFound.js');
 
 
 class Page extends Items{
-	static parentOptionsKey  = false
-	static parentOptionsKeys = []	
+	static shortKey = false
+	static _options = ['pages', 'fullName', 'details', 'tooltip', 'hideChildPagesInSidebar'];
+	
 	constructor(options){
 		super(options);
 		this.pages      = [];
@@ -103,9 +104,7 @@ class Page extends Items{
 		if(pos === pathArr.length){
 			return this;
 		}
-		const cur = pathArr[pos];
-		console.log(this.name, cur, pos, pathArr);
-		
+		const cur = pathArr[pos];	
 		if(cur in this.pageByName){
 			return this.pageByName[cur].findPage(pathArr, pos+1);
 		} else throw new E404('404. Page Not Found. Path='+pathArr.join('/'));
@@ -124,7 +123,16 @@ class Page extends Items{
 			badge       : await this.getBadge(req),
 			breadcrumbs : await this.renderBreadcrumbs(req),		
 			icon        : await this.getIcon(req),
+			h           : this.h,
 		});
+	}
+	$isH(){return true};
+	$h(){return 2};
+	$iconChild(field='useIconInPage',isFromParent=false, haveField='haveIcon'){
+		return super.$iconChild(field, isFromParent, haveField);
+	}
+	$badgeChild(field='useBadgeInPage', isFromParent=false, haveField='haveBadge'){
+		return super.$iconChild(field, isFromParent, haveField);
 	}
 	async renderBreadcrumbs(req){
 		return await this.template('page-breadcrumbs', req, {

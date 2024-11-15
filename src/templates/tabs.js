@@ -1,6 +1,8 @@
-module.exports = async (req, {head, content})=>`
+module.exports = async (req, {heads, content, style})=>`
 	<div class="smon-tabs">
-		${head}
+		<ul class="nav nav-${style} smon-tabs-header" role="tablist">
+			${heads}
+		</ul>
 		<div class="tab-content">
 			${content}
 		</div>

@@ -1,26 +1,15 @@
-module.exports = async (req, {header, width, body})=>{
-	//width = isNaN(1*width) ? width : 1*width;
-	let cWidth = '';
-	let sWidth = '';
-	if(!isNaN(1*width)){
-		if(1*width > 0 && width<=12){
-			cWidth = 'col-sm-'+width;
-		} else {
-			sWidth = 'width: '+width+'px;';
-		}
-	} else {
-		sWidth = 'width: '+width+';';
-	}
-
-	return `<div class="sMon-card card ${cWidth}" style="${sWidth}">
+module.exports = async (req, {content, details, name, fullName, icon, badge, h, classes}, item)=>`
+	<div class="sMon-card card ${classes||''}">
 		<div class="card-body">
-			${header}
-			${body}
+			${(name||fullName) ? `
+				<div class="sMon-card-header">
+					${await item.template('paragraph-title', req, {details, name, fullName, icon, badge, h, classes:'card-title sMon-card-title'})}
+					<hr />
+				</div>
+			`:''}	
+			<div class="card-text sMon-card-body">
+				${content}
+			</div>
 		</div>
-	</div>`
-}; 
-
-
-
-
-
+	</div>
+`;

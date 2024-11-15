@@ -5,10 +5,17 @@ const AbstractObject = require('./AbstractObject.js');
 const requireAll     = require('../functions/requireAll.js');
 
 let wasIntance = false;
-
 class Lib extends AbstractObject{
 	$templates()  {return requireAll(dirname(__dirname)+'/templates/')}
-	$base()       {return requireAll(__dirname+'/items/')}
+	$base()       {
+		const res       = requireAll(__dirname+'/items/');
+		const shortKeys = requireAll(__dirname+'/items/shortKeys/')
+		for(let key in shortKeys){
+			assert(!(key in res));
+			res[key] = shortKeys[key];
+		}
+		return res;
+	}
 	onInit(){
 		assert(!wasIntance); wasIntance = true; //only one instance
 		super.onInit();
@@ -27,32 +34,42 @@ class Lib extends AbstractObject{
 		}
 		assert(Class.name);
 
-		const key = Class.parentOptionsKey;		
+		const key = Class.shortKey;		
 		if(key) assert.equal(typeof(key), 'string');
 		if(Class.isReplace){
 			if(Class.name in this.classes) {
 				const Old = this.classes[Class.name]
-				if(Old.parentOptionsKey){
-					delete this.classByKey[Old.parentOptionsKey];
+				if(Old.shortKey){
+					delete this.classByKey[Old.shortKey];
 				}
 			}			
 		} else {
-			assert(!(Class.name in this.classes));
+			if(Class.name in this.classes){
+				throw new Error(`class ${Class.name} already exists`);
+			}
 			if(key && (key in this.classByKey)){
-				throw new Error(`${Class.name}.parentOptionsKey='${key}' is already defined by  ${this.classByKey[key].name}`);
+				throw new Error(`${Class.name}.shortKey='${key}' is already defined by  ${this.classByKey[key].name}`);
 			}
 			const proto  = Object.getPrototypeOf(Class.prototype);
 			const Parent = proto ? proto.constructor : undefined;
-			if(Parent && Parent.parentOptionsKey && Parent.parentOptionsKey===key){
-				throw new Error(`Class '${Class.name}' have same parentOptionsKey '${key}' that has parent Class '${Parent.name}'`);
+			if(Parent && Parent.shortKey && Parent.shortKey===key){
+				throw new Error(`Class '${Class.name}' have same shortKey '${key}' that has parent Class '${Parent.name}'`);
 			}
 		}
 		if(key){
 			this.classByKey[key] = Class;
 		}
 		this.classes[Class.name] = Class;
+		
+		if(Class.addToBase){
+			assert(!this.base[Class.name]);
+			this.base[Class.name] = Class.name;
+		}
+		if(Class.defineSubClasses){
+			Class.defineSubClasses();
+		}	
 	}
-	classByParentOptionsKey(key0){
+	classByShortKey(key0){
 		if(key0 in this.classByKey){
 			return this.classByKey[key0];
 		}
@@ -82,15 +99,22 @@ class Lib extends AbstractObject{
 			);
 		});		
 	}
-	createItemByParentOptionsKey(key0, parentOptions={}, parent=undefined){
-		const key   = this.normalizeKey(key0);
-		const Class = this.classByParentOptionsKey(key);
-		const opts  = {[key]: parentOptions[key0], parent};
-		Class.parentOptionsKeys.forEach(optKey=>{
-			opts[optKey] = parentOptions[optKey]
-		})
-		return new Class(opts);
+	createItemByShortKey(key0, parentOptions={}, parent=undefined, opts0={}){
+		const key    = this.normalizeKey(key0);
+		const Class  = this.classByShortKey(key);
+		const copyTo = Class.shortKeyTo ?? key;
+		const pVal   = parentOptions[key0];
+		if(copyTo){
+			return new Class({...opts0, [copyTo]: pVal});
+		} else if(typeof(pVal)!=='object' || pVal.constructor!==Object){
+			const res = new Class(pVal);
+			for(let k in opts0){
+				res.options[k] = opts0[k];
+			}
+			return res; 
+		} else {
+			return new Class({...opts0,...pVal});
+		}
 	}
 };
-
 module.exports = Lib;
