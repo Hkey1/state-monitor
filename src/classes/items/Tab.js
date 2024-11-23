@@ -30,10 +30,16 @@ class Tab extends Items{
 	}
 	async renderTabBody(req, content=undefined){
 		return await this.template('tab-body', req, {
-			isActive : this.isActive,
-			content  : await this.renderBody(req, content), 
-			divId    : this.divId,  
-			buttonId : this.buttonId,  
+			isActive  : this.isActive,
+			content   : await this.renderBody(req, content), 
+			divId     : this.divId,  
+			buttonId  : this.buttonId,  
+			name      : this.name,
+			fullName  : await this.option('fullName', req, 'string', true, true),
+			badge     : await this.getBadge(req),
+			details   : await this.option('details',  req, 'string', true, true),
+			icon      : await this.getIcon(req),
+			h         :	this.h,	
 		});
 	}
 	async renderBody(req, content=undefined){

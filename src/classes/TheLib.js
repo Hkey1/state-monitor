@@ -7,15 +7,7 @@ const requireAll     = require('../functions/requireAll.js');
 let wasIntance = false;
 class Lib extends AbstractObject{
 	$templates()  {return requireAll(dirname(__dirname)+'/templates/')}
-	$base()       {
-		const res       = requireAll(__dirname+'/items/');
-		const shortKeys = requireAll(__dirname+'/items/shortKeys/')
-		for(let key in shortKeys){
-			assert(!(key in res));
-			res[key] = shortKeys[key];
-		}
-		return res;
-	}
+	$base()       {return requireAll(__dirname+'/items/')}
 	onInit(){
 		assert(!wasIntance); wasIntance = true; //only one instance
 		super.onInit();

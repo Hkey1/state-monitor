@@ -6,6 +6,7 @@ const lib          = require('../../lib.js');
 class Items extends AbstractItem{
 	static shortKey   = 'items'
 	static shortKeyTo = false	
+	static childClassName = 'Items';
 
 	static childNameMustBeUnique  = false
 	static childNameMustBeDefined = false
@@ -187,7 +188,7 @@ class Items extends AbstractItem{
 			throw new Error(this.constructor.name+`: type=${type} opts=${opts} name=${name}`);
 		}
 		//assert.equal(type, 'object');
-		return new Items(opts);
+		return new lib.classes[this.constructor.childClassName](opts);
 	}
 	setItemName(item, name){
 		if(name!==undefined && name!==''){
@@ -237,8 +238,10 @@ class Items extends AbstractItem{
 		}
 		
 		let item = items[0];
+		assert(item!==undefined);
 		assert(item!==this);
 		assert(item!==this.parent);
+		
 		assert(!this.items.find(cItem=>cItem===item));
 		
 		item = this.normalizeChildItem(item);		

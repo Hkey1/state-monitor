@@ -4,120 +4,106 @@ const AbstractFilter = require('./AbstractFilter.js');
 const getKey         = require('../../functions/getKey.js');
 
 class GroupBy extends AbstractFilter{
-	constructor(cols, opts={}){
-		if(typeof(cols)==='object' && !Array.isArray(cols)){
-			mustBe.normalObject(cols);
-			assert(opts===undefined || Object.keys(opts).length===0);
-			assert(opts.cols  || opts.col);
-			assert(!opts.cols || !opts.col);
-			
-			opts = cols;
-			cols = opts.cols || opts.col || opts.groupBy;
+	constructor(opts){
+		if(typeof(opts)==='string'){
+			opts = {groupBy:opts};
 		}
-		let {countCol, keyCol, map, ranges, names, hideEmpty} = opts; 
-		Array.isArray(cols) ? cols.forEach(col=>mustBe.notEmptyString(col)) : mustBe.notEmptyString(cols);
-		assert(cols.length);
+		mustBe.normalObject(opts);
+		let {groupBy, nameCol, ranges} = opts;
+		mustBe.notEmptyString(groupBy);
+		mustBe.notEmptyString(nameCol ??= groupBy);
+		ranges===undefined || Array.isArray(ranges) || mustBe.normalObject(ranges);
 
-		countCol === undefined || mustBe.notEmptyString(countCol);
-		keyCol   === undefined || mustBe.notEmptyString(keyCol);
-		map      === undefined || (map instanceof Map)  || typeof(map)==='function' || mustBe.normalObject(map);
-		ranges   === undefined || Array.isArray(ranges) || mustBe.normalObject(ranges);
-
-		cols     = Array.isArray(cols) ? cols : [cols];
-		keyCol ??= cols.join('|')
-		
 		super();
-		
-		this.cols         = cols;
-		this.countCol     = countCol;
-		this.keyCol       = keyCol; 
-		this.map          = map;
-		this.names        = names;
-		this.hideEmpty  ??= !ranges;
-		
 		if(ranges){
-			this.ranges      = this.normalizeRanges(ranges);
-			this.rangeByName = Object.fromEntries(this.ranges.map(range=>[range.name, range])); 
+			ranges = this.constructor.normalizeRanges(opts.ranges);
+			assert(Array.isArray(ranges));
+			assert(ranges.length>0);
+			ranges.forEach(range=>{
+				mustBe.normalObject(range);
+				mustBe.notEmptyString(range.name);
+				assert.equal(typeof(range.to),'number');
+			})
 		}
+		this.groupBy     = groupBy;
+		this.nameCol     = nameCol;
+		this.ranges      = ranges;
+		this.rangeByName = ranges ? Object.fromEntries(ranges.map(range=>[range.name, range])) : undefined;
 	}
-	normalizeRanges(ranges){
-		ranges = !Array.isArray(ranges) ? Object.entries(ranges).map(([name,range])=>{
-			range = typeof(range)==='number' ? {to: range} : range;
-			return {name, ...range};
-		}) : ranges;
-		ranges = ranges.map(range=>{
-			return {...(typeof(range)==='number' ? {to: range} : range)};
-		});		
-		ranges = ranges.sort((a,b)=>a.to-b.to);
-		ranges.forEach((range,num)=>{
-			range.num = num;
-		});		
-		ranges.forEach((range,num)=>{
-			const prev = ranges[num-1];
-			const next = ranges[num+1];
-			if(!range.name){
-				if(!prev || !isFinite(prev.to)){
-					range.name = '…—'+range.to;
-				} else if(!isFinite(range.to)){
-					range.name = prev.to+'—…';
-				} else {
-					range.name = prev.to+'—'+range.to;
-				}
-			}
+	static normalizeRange(range, name=undefined){
+		if(typeof(range)==='number'){
+			range = {to: range};
+		}
+		mustBe.normalObject(range);
+		assert.equal(typeof range.to, 'number');
+		range.name ??= name;
+		return range;
+	}
+	static normalizeRanges(ranges){
+		if(ranges===undefined){
+			return ranges;
+		}
+		if(Array.isArray(ranges)){
+			ranges = ranges.map(range=>this.normalizeRange(range));
+		} else {
+			mustBe.normalObject(ranges);			
+			ranges = Object.entries(ranges).map(([name, range])=>this.normalizeRange(range, name))
+		}
+		ranges = ranges.sort((a,b)=>a.to - b.to);
+		let prevTo = -Infinity;
+		function toStr(x){
+			return isFinite(x) ? x : '…'
+		}
+		ranges.forEach((range, i)=>{
+			range.from ??= prevTo;
+			range.name ||= toStr(range.from)+'—'+toStr(range.to);
+			range.num    = i;
+			prevTo     = range.to;
 		});
 		return ranges;
 	}
-	async filter(data, item, req){
-		const {map, keyCol, cols, countCol, ranges, rangeByName, hideEmpty, names} = this;
+	async filter(data){
+		assert(Array.isArray(data));
+		const {groupBy, nameCol, ranges, rangeByName} = this;
+		console.log(ranges, rangeByName)
+		
 		const countbyKey = {};
 		if(ranges){
-			ranges.forEach(range=>countbyKey[range.name]=0)
+			ranges.forEach(range=>{
+				countbyKey[range.name] = 0;
+			})
 		}
-		if(names){
-			names.forEach(name=>countbyKey[name]=0)
-		}
-		if(!ranges && names===undefined && typeof(map)==='object' && !Array.isArray(map)){
-			((map instanceof Map) ? map.values() : Object.values(map))
-				.forEach(val=>countbyKey[name]=0);
-		}
-		let sum = 0;
-		const mapType = typeof(map);
-		data.forEach((row, i)=>{
-			const cnt = countCol ? (1*row[countCol] || 0 ): 1;
-			let   key = cols.map(col=>row[col]);
-			if(mapType==='object'){
-				key = getKey(map, key) ?? key;
-			} else if(mapType==='function'){
-				key = map(key, row, data, i);
-				if(key===undefined){
-					return;
-				}
-			}			
+		data.forEach(row=>{
+			mustBe.normalObject(row);
+			let val = row[groupBy];
 			if(ranges){
-				const range = ranges.find(range=>range.to >= key); 
-				if(!range){
+				val   = val*1;
+				const range = isNaN(val) ? false : ranges.find(range=>range.to>=val);
+				if(range){
+					val = range.name;
+				} else {
 					return;
 				}
-				key = range.name;
 			}
-			countbyKey[key] ??= 0;
-			countbyKey[key]  += cnt;
-			sum              += cnt; 
-		});
-		return Object.entries(countbyKey).map(([key, count])=>{
+			countbyKey[val] ||= 0;
+			countbyKey[val]++;
+		})
+		const sum = Object.values(countbyKey).reduce((acc,val)=>acc+val, 0);
+		let res = Object.entries(countbyKey).map(([name, count])=>{
+			const range = ranges ?  rangeByName[name] : undefined;
+			console.log(name, range);
 			return {
-				num : rangeByName ? rangeByName[key].num : undefined,
-				[keyCol]:  key,
+				num : range ? range.num : undefined,
+				to  : range ? range.to : undefined,
+				[nameCol]:  name,
 				count,
 				procent: Math.round(100*count/sum)+'%',
 			}
-		}).filter(row=>!hideEmpty || row.count!==0).sort((a,b)=>{
-			if(rangeByName){
-				return a.num - b.num; 
-			} else {
-				return a[keyCol].localeCompare(b[keyCol])
-			}
-		});
+		})
+		if(!ranges){
+			res.sort((a,b)=>a[nameCol].localeCompare(b[nameCol]))
+		}
+		return res;
 	}	
 };
 module.exports = GroupBy;

@@ -1,1 +1,1 @@
-{"version":"0.0.1","dependencies":{"express":"^4.21.1","hkey-must-be":"^0.0.5","md5":"^2.3.0"}}
+{"version":"0.0.1","dependencies":{"cookie-parser":"^1.4.7","express":"^4.21.1","hkey-must-be":"^0.0.5","md5":"^2.3.0","smart-round":"^1.0.0"}}

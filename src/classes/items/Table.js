@@ -22,13 +22,19 @@ class Table extends Tab {
 		this.checkSpecialKeys(options, []);
 		return options;
 	}
+	async getRawData(req){
+		return await (this.options.data ? this : this.parent).option('data', req, 'array');
+	}
 	async getData(req){
-		const data = await((this.options.data ? this : this.parent).option('data', req, 'array'));
+		let data = await this.getRawData(req);
+		assert(Array.isArray(data));
 		
 		if(!this.options.filter){
 			return data;
 		} else if (this.options.filter instanceof AbstractFilter){
-			return await this.options.filter.filter(data, this, req);
+			data = await this.options.filter.filter(data, this, req);
+			assert(Array.isArray(data));
+			return data;
 		} else return data.map((rawRow, i)=>{
 			const row = {...rawRow};
 			const res = this.options.filter(row, req, data, i, this);
@@ -43,18 +49,22 @@ class Table extends Tab {
 		}).filter(row=>row!==null);
 	}
 	$haveBadge(){return true}
+	
 	async getBadge(req){
 		try{
 			if(this.options.badge!==undefined){
 				return await super.getBadge(req);
 			} else {
-				return (await this.getData(req)).length + '';
+				return (await this.nRows(req)) + '';
 			}
 		} catch(e){
 			console.error(e);
 			return 'err';
 		}
 	}				
+	async nRows(req){
+		return (await this.getData(req)).length
+	}
 	filterColsNames(cols, data){
 		return cols;
 	}
@@ -97,7 +107,6 @@ class Table extends Tab {
 		return await this.template('table', req, {
 			id         : this.id,
 			dataTables, 
-			nRows : data.length, 
 			isDataTablesNavHide: typeof(dataTables)==='object' && dataTables.___hideNav,
 			header     : '<tr>'+this.filterColsNames(cols, data).map(col=>'<th>'+col+'</th>').join('')+'</tr>',
 			width      : this.options.width,

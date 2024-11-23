@@ -117,8 +117,9 @@ h2 .sMon-icon-svg-url{
 
 
 .pie-svg   path.pie-segment,
-.histo-svg rect.pie-segment{
-	opacity: 0.8;
+.histo-svg rect.pie-segment,
+.pie-svg  cicle.pie-segment{
+	opacity: 0.7;
 	transition: opacity 0.3s;
 }	
 
@@ -159,4 +160,36 @@ table.dataTable > tbody > tr.pie-segment:hover >td{
 }
 .accordion-item.not-hideable > .accordion-header > .accordion-button::after{
 	display: none;
+}
+.sMon-tab-body-title {
+	padding-bottom: 12px;
+}
+h1.sMon-paragraph-title .badge{
+	margin-left: 15px;	
+}
+
+h2.sMon-paragraph-title .badge{
+	margin-left: 12px;	
+}
+h3.sMon-paragraph-title .badge{
+	margin-left: 10px;	
+}
+h4.sMon-paragraph-title .badge{
+	margin-left: 8px;	
+}
+h5.sMon-paragraph-title .badge{
+	margin-left: 6px;	
+}
+h6.sMon-paragraph-title .badge{
+	margin-left: 4px;	
+}
+
+
+
+.sMon-GroupBy-stats th{
+	font-weight: lighter;
+}
+
+.sMon-GroupBy-stats td.sMon-GroupBy-stats-tdWithLine{
+	padding-bottom: 2px
 }

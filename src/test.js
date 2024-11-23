@@ -1,14 +1,15 @@
 const express  = require('express');
 const sMon     = require('./index.js');
+const cookie   = require('cookie-parser')
 
 const {Server, HTML, Page, Tabs, Table, InfoTable} = sMon;
 
-//TODO Rows, Row, Col
 //TODO login Password
-//TODO tableGroupBy как бейдж считать число непустых строк
-//TODO tab fullName и details отображать в контенте
 
 const app  = express(); 
+app.use(cookie());
+
+
 const data = [
 	{name: 'Mark',  active: true, a: 1, b:2},
 	{name: 'Jack',  active: true, a: 3, c:4},
@@ -23,13 +24,13 @@ const data = [
 	{name: 'Olga',  active: true, a: 6, c:4},	
 	{name: 'Rost',  active: true, a: 3, c:3},	
 	{name: 'Vlad',  active: true, a: 3, c:3},	
-	{name: 'Vadim',  active: false, a: 3, c:3},	
+	{name: 'Vadim', active: false, a: 3, c:3},	
 	{name: 'Vano',  active: true, a: 3, c:3},	
-	{name: 'Lev',  active: true, a: 3, c:3},	
-	{name: 'Leo',  active: true, a: 3, c:3},	
-	{name: 'Sasha',  active: true, a: 3, c:3},	
-	{name: 'Masha',  active: true, a: 3, c:3},	
-	{name: 'Nickolo',  active: true, a: 3, c:3},		
+	{name: 'Lev',   active: true, a: 3, c:3},	
+	{name: 'Leo',   active: true, a: 3, c:3},	
+	{name: 'Sasha', active: true, a: 3, c:3},	
+	{name: 'Masha', active: true, a: 3, c:3},	
+	{name: 'Lui',   active: true, a: 3, c:3},		
 ];
 data.forEach(row=>{
 	row.latency = Math.round(100 * (Math.random() + Math.random() + Math.random()));
@@ -44,10 +45,11 @@ const info = {
 
 
 const server = new Server({
+	//login    : 'login',
+	//password : 'pwd',
 	icon: 'https://icons.getbootstrap.com/assets/icons/apple.svg',
 	//'amazon',
 	//'apple',
-	
 	/*
 	async ()=>`
 		<svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" class="bi bi-amazon" viewBox="0 0 16 16">
@@ -83,7 +85,7 @@ const server = new Server({
 		tabsPage: {
 			icon: 'segmented-nav',
 			tabs:{
-				style: 'cards',
+				//style: 'cards',
 				_width: 3,
 				items: {
 					tab1: 'this is tab1',
@@ -99,6 +101,8 @@ const server = new Server({
 						badge: ()=>'someBadge',					
 					},			
 					tab4: {
+						fullName : "Tab 4",
+						details  : "Tab 4 some details",
 						table: data,					
 					},
 				}
@@ -169,7 +173,16 @@ const server = new Server({
 					panel5: {table:data},
 				}
 			}
-		}
+		},
+		rowsPage: {	
+			rows: {
+				__width: 3,
+				items: [
+					['row1.col1','row1.col2','row1.col3','row1.col4','row1.col5','row1.col6','row1.col7'],
+					['row2.col1','row2.col2','row2.col3','row2.col4','row2.col5','row2.col6','row2.col7'],
+				]
+			}
+		}		
 	},
 });
 app.use(server.middleware);

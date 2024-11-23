@@ -1,23 +1,39 @@
-const fs        = require('node:fs');
-const {dirname} = require('node:path');
-const assert    = require('node:assert');
-const md5       = require('md5');
-const mustBe    = require('hkey-must-be');
-const Page      = require('./Page.js');
-const Files     = require('../Files.js');
-const isUrl     = require('../../functions/isUrl.js');
-const pjson     = require('../../../package.json');
+const fs             = require('node:fs');
+const {dirname}      = require('node:path');
+const { createHash } = require('node:crypto');
+const assert         = require('node:assert');
+const md5            = require('md5');
+const mustBe         = require('hkey-must-be');
+const Page           = require('./Page.js');
+const Files          = require('../Files.js');
+const isUrl          = require('../../functions/isUrl.js');
+const pjson          = require('../../../package.json');
 
 const assetsDir   = dirname(dirname(__dirname))+'/assets/'
 const defaultName = 'sMon';
 
 class Server extends Page {	
-	static _options = ['sidebarWidth', 'favicon'];
+	static _options = ['sidebarWidth', 'favicon', 'login', 'password', 'loginMaxAge', 'secret'];
 
 	constructor(options){
+		if(typeof(options)==='object' && !Array.isArray(options)){
+			if(options.login  && !options.password) throw new Error('you provide options.login  widthout password');
+			if(!options.login && options.password) throw new Error('you provide options.password widthout login');
+			if(options.loginMaxAge){
+				if(!options.password) throw new Error('you provide options.loginMaxAge widthout password');
+				if(!options.login)    throw new Error('you provide options.loginMaxAge widthout login');
+				//if(!options.secret)   throw new Error('you provide options.loginMaxAge widthout secret');
+			}
+			if(options.secret){
+				if(!options.password)  throw new Error('you provide options.secret widthout password');
+				if(!options.login)     throw new Error('you provide options.secret widthout login');
+				if(!options.loginMaxAge)  throw new Error('you provide options.secret widthout loginMaxAge');
+			}
+		}
+
  		super(options);
 		this.name                 ??= defaultName;
-		this.options.details      ??= 'no server.details'
+		this.options.details      ??= ''
 		this.options.sidebarWidth ??= 280;		
 		if(!options.badge){
 			this.options.badge = ()=>this.name===defaultName ? pjson.version : ''
@@ -128,7 +144,6 @@ class Server extends Page {
 		return path==='' ? this : super.findPage(Array.isArray(path) ? path : path.split('/').map(name=>decodeURIComponent(name)), pos);
 	}	
 	async renderPage(req){
-		//console.log('renderPage');
 		const page    = this.findPage(req.sMon.path);
 		return await this.template('main', req, {
 			content   : await page.renderBody(req), 
@@ -138,8 +153,46 @@ class Server extends Page {
 			sidebar   : await this.renderSidebar(req),
 		});
 	}
+	$authBase64(){
+		return this.options.login ? Buffer.from(this.options.login+':'+this.options.password).toString('base64') : false;
+	}	
+	sha256(val){
+		return createHash('sha256').update(('s*s6'+this.options.secret+'#df)'+val+'s,v60,')).digest('base64');
+	}
+	encodeCookie(ts){
+		ts   +='';
+		tsCS = this.sha256('sof8*'+ts[ts.length-1]+'soai'+this.options.secret+'d9_'+(ts%3)+'six8'+ts+'mndt8');
+		return this.sha256('VkD8#'+this.options.login + tsCS[1] + '|o*d' +tsCS+ this.options.password + tsCS[2]+ ':J&' + ts + tsCS[0]+ '$' + this.options.secret+'Oi)68');
+	} 
 	_middlewareCb(prefix, req, res, next){
 		if(req.path.startsWith(prefix)){
+			this.init();
+			if(this.options.login){
+				let auth = false;
+				console.log(req.headers.authorization, this.authBase64);
+				
+				if(req.headers.authorization && req.headers.authorization.split(' ')[1] === this.authBase64){
+					console.log('x1');
+					if(this.options.loginMaxAge){
+						const opts = { maxAge: this.options.loginMaxAge };
+						res.cookie('smon_auth',    encodeCookie(now), opts);
+						res.cookie('smon_auth_ts', now,               opts);
+					}
+					auth = true;
+				} else if(this.options.loginMaxAge){
+					console.log('x2');
+					if(!req.cookies || !res.cookie) throw new Error('Use express middleware cookie-parser or turn off  options.loginMaxAge')
+					const cookie = req.cookies['smon_auth'];
+					const ts     = 1*req.cookies['smon_auth_ts'];
+					auth = cookie && ts && now-ts<this.options.loginMaxAge && ts >= now && cookie===encodeCookie(ts); 
+				}
+				if(!auth){
+					console.log('x3');
+					res.set('WWW-Authenticate', 'Basic realm="401"');
+					res.status(401).send('Authentication required.');
+					return;
+				}
+			}
 			req.sMon = {
 				tableCache : {},
 				path       : req.path.slice(prefix.length), 
@@ -148,7 +201,7 @@ class Server extends Page {
 			};	
 			this.respond(req, res, next);
 		} else next();
-	}
-	
+	}	
 }
 module.exports = Server;
+
