@@ -65,7 +65,7 @@ class GroupBy extends AbstractFilter{
 	async filter(data){
 		assert(Array.isArray(data));
 		const {groupBy, nameCol, ranges, rangeByName} = this;
-		console.log(ranges, rangeByName)
+		//console.log(ranges, rangeByName)
 		
 		const countbyKey = {};
 		if(ranges){
@@ -91,7 +91,7 @@ class GroupBy extends AbstractFilter{
 		const sum = Object.values(countbyKey).reduce((acc,val)=>acc+val, 0);
 		let res = Object.entries(countbyKey).map(([name, count])=>{
 			const range = ranges ?  rangeByName[name] : undefined;
-			console.log(name, range);
+			//console.log(name, range);
 			return {
 				num : range ? range.num : undefined,
 				to  : range ? range.to : undefined,

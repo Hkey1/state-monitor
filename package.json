@@ -1,1 +1,34 @@
-{"version":"0.0.1","dependencies":{"cookie-parser":"^1.4.7","express":"^4.21.1","hkey-must-be":"^0.0.5","md5":"^2.3.0","smart-round":"^1.0.0"}}
+{
+    "name": "hkey-state-monitor",
+    "version": "0.0.1",
+    "main": "./src/index.js",
+    "scripts": {
+        "test": "echo \"Error: no test specified\" && exit 1"
+    },
+    "author": "Andrey Belousoff <a.v.belousoff@gmail.com>",
+    "license": "MIT",
+    "description": "Node.js express middleware for monitoting application state",
+    "keywords": [
+        "state", "express"
+    ],
+    "dependencies": {
+		"cookie-parser":"^1.4.7",
+		"express":"^4.21.1",
+		"hkey-must-be":"^0.0.5",
+		"md5":"^2.3.0",
+		"smart-round":"^1.0.0"
+    },
+    "engines": {
+        "node": ">=0.1.0"
+    },
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/Hkey1/state-monitor"
+    },
+    "readme":"Node.js events to promises",
+    "readmeFilename": "README.md",
+    "bugs": {
+        "url": "https://github.com/Hkey1/state-monitor/issues"
+    },
+    "homepage": "https://github.com/Hkey1/state-monitor"
+}

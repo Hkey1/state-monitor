@@ -76,7 +76,7 @@ class Server extends Page {
 			const type = typeof(icon);
 			icon = (type==='string' && !isUrl(icon) && !icon.includes('<')) ? `https://icons.getbootstrap.com/assets/icons/${icon}.svg` : icon;
 			const contentType = (type==='function' ||(!isUrl(icon) && type==='string' && icon.includes('<'))) ? "image/svg+xml" : undefined;
-			console.log({contentType, type});
+			//console.log({contentType, type});
 			this.addFile({
 				name    : 'favicon',
 				include : 'favicon',
@@ -169,10 +169,10 @@ class Server extends Page {
 			this.init();
 			if(this.options.login){
 				let auth = false;
-				console.log(req.headers.authorization, this.authBase64);
+				//console.log(req.headers.authorization, this.authBase64);
 				
 				if(req.headers.authorization && req.headers.authorization.split(' ')[1] === this.authBase64){
-					console.log('x1');
+					//console.log('x1');
 					if(this.options.loginMaxAge){
 						const opts = { maxAge: this.options.loginMaxAge };
 						res.cookie('smon_auth',    encodeCookie(now), opts);
@@ -180,14 +180,14 @@ class Server extends Page {
 					}
 					auth = true;
 				} else if(this.options.loginMaxAge){
-					console.log('x2');
+					//console.log('x2');
 					if(!req.cookies || !res.cookie) throw new Error('Use express middleware cookie-parser or turn off  options.loginMaxAge')
 					const cookie = req.cookies['smon_auth'];
 					const ts     = 1*req.cookies['smon_auth_ts'];
 					auth = cookie && ts && now-ts<this.options.loginMaxAge && ts >= now && cookie===encodeCookie(ts); 
 				}
 				if(!auth){
-					console.log('x3');
+					//console.log('x3');
 					res.set('WWW-Authenticate', 'Basic realm="401"');
 					res.status(401).send('Authentication required.');
 					return;

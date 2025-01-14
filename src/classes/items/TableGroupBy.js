@@ -140,9 +140,6 @@ class TableGroupBy extends Table {
 				return addColor(row, colors[name])
 			});
 		}
-		
-		console.table(data); 
-		
 		return data;
 	}
 	async renderContent(req, data=undefined){
@@ -255,7 +252,7 @@ class TableGroupBy extends Table {
 	}
 	filterColsNames(cols, data){
 		const haveNum = (data[0] && data[0].num!==undefined) ? 1 : 0;
-		console.log({haveNum});
+		//console.log({haveNum});
 		cols = [...cols];
 		cols[0] = '';
 		if(haveNum){
